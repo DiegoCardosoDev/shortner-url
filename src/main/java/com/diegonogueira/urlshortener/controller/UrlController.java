@@ -4,6 +4,7 @@ import com.diegonogueira.urlshortener.dto.ShortenUrlRequest;
 import com.diegonogueira.urlshortener.dto.ShortenUrlResponse;
 import com.diegonogueira.urlshortener.entities.UrlEntity;
 import com.diegonogueira.urlshortener.repository.Urlrepository;
+import com.diegonogueira.urlshortener.service.UrlShorteningService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -20,23 +21,14 @@ import java.time.LocalDateTime;
 public class UrlController {
 
     private final Urlrepository urlrepository;
+    private final UrlShorteningService urlShorteningService;
 
     @PostMapping(value = "/shorten-url")
     public ResponseEntity<ShortenUrlResponse> shortenUrl(@RequestBody ShortenUrlRequest request,
-                                                         HttpServletRequest httpServlet){
-
-        String id;
-
-        do {
-
-            id = RandomStringUtils.randomAlphabetic(5,10);
-
-        }while (urlrepository.existsById(id));
-        urlrepository.save(new UrlEntity(id,request.url(), LocalDateTime.now().plusMinutes(1)));
-
-        var redirctUrl = httpServlet.getRequestURL().toString().replace("shorten-url",id);
-
-        return  ResponseEntity.ok(new ShortenUrlResponse(redirctUrl));
+                                                         HttpServletRequest httpServlet) {
+        String baseUrl = httpServlet.getRequestURL().toString();
+        ShortenUrlResponse response = urlShorteningService.shortenUrl(request, baseUrl);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("{id}")
